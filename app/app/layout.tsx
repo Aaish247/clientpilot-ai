@@ -1,12 +1,23 @@
+import "./globals.css";
+
 export const metadata = {
   title: "ClientPilot AI",
-  description: "AI tool to find clients",
+  description: "Cold email generator for freelancers & agencies",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body
+        style={{
+          margin: 0,
+          padding: 0,
+          background: "#fafafa",
+          fontFamily: "Inter, sans-serif",
+        }}
+      >
+        {children}
+      </body>
     </html>
   );
 }
