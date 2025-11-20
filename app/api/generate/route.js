@@ -1,52 +1,33 @@
 import { NextResponse } from "next/server";
 
-export async function POST(req: Request) {
+export async function POST(req) {
   try {
     const { service, client, extra } = await req.json();
 
     const prompt = `
-Write a friendly client outreach email based on:
-
+Write a professional client email.
 Service: ${service}
 Client: ${client}
-Extra details: ${extra || "None"}
+Extra: ${extra}
+`;
 
-Make it short, simple, professional, and human.
-    `;
+    const apiRes = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
 
-    const apiKey = process.env.OPENAI_API_KEY;
+    const data = await apiRes.json();
 
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: "Missing OpenAI API key" },
-        { status: 500 }
-      );
-    }
-
-    const completion = await fetch(
-      "https://api.openai.com/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [{ role: "user", content: prompt }],
-        }),
-      }
-    ).then((r) => r.json());
-
-    const output =
-      completion.choices?.[0]?.message?.content ||
-      "AI could not generate email.";
-
-    return NextResponse.json({ output });
+    return NextResponse.json({ output: data.choices?.[0]?.message?.content });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Server error", details: String(error) },
-      { status: 500 }
-    );
+    console.error(error);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
