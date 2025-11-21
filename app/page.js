@@ -25,10 +25,4 @@ export default function Home() {
       </div>
     </div>
   );
-}        >
-          Pricing
-        </a>
-      </div>
-    </div>
-  );
-          }
+}
