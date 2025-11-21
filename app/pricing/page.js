@@ -50,46 +50,4 @@ export default function Pricing() {
       </div>
     </div>
   );
-}    </div>
-  );
-}        }}>
-          <h2>Monthly</h2>
-          <p style={{ fontSize: "14px" }}>Best for professionals.</p>
-          <h3 style={{ marginTop: "10px" }}>$49.99 / month</h3>
-          <ul style={{ textAlign: "left", marginTop: "15px", fontSize: "14px", lineHeight: "22px" }}>
-            <li>• Unlimited Emails</li>
-            <li>• Smart Follow-Up AI</li>
-            <li>• Multi-Platform Client Search</li>
-            <li>• Priority Speed</li>
-          </ul>
-
-          <a href="YOUR_GUMROAD_MONTHLY_LINK_HERE" style={{ textDecoration: "none" }}>
-            <button style={{ marginTop: "20px", width: "100%" }}>Buy Now</button>
-          </a>
-        </div>
-
-        {/* LIFETIME PLAN */}
-        <div style={{
-          border: "2px solid #0038ff",
-          padding: "20px",
-          width: "260px",
-          borderRadius: "14px"
-        }}>
-          <h2>Lifetime</h2>
-          <p style={{ fontSize: "14px" }}>Pay once, use forever.</p>
-          <h3 style={{ marginTop: "10px" }}>$129.99 / once</h3>
-          <ul style={{ textAlign: "left", marginTop: "15px", fontSize: "14px", lineHeight: "22px" }}>
-            <li>• Everything in Monthly</li>
-            <li>• Lifetime Updates</li>
-            <li>• VIP Support</li>
-          </ul>
-
-          <a href="YOUR_GUMROAD_LIFETIME_LINK_HERE" style={{ textDecoration: "none" }}>
-            <button style={{ marginTop: "20px", width: "100%" }}>Buy Lifetime</button>
-          </a>
-        </div>
-
-      </div>
-    </div>
-  );
-            }
+}
