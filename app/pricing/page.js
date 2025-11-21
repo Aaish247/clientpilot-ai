@@ -1,40 +1,42 @@
-export default function PricingPage() {
+export default function Pricing() {
   return (
-    <div className="container" style={{ textAlign: "center", marginTop: "40px" }}>
-      <h1>Pricing Plans</h1>
-      <p>Choose the right plan for your growth.</p>
+    <div style={{ maxWidth: "800px", margin: "40px auto", padding: "20px" }}>
+      <h1 style={{ fontSize: "36px", textAlign: "center", marginBottom: "20px" }}>
+        Pricing Plans
+      </h1>
 
-      <div style={{ display: "flex", gap: "20px", marginTop: "40px", justifyContent: "center", flexWrap: "wrap" }}>
+      <p style={{ textAlign: "center", marginBottom: "30px" }}>
+        Simple and affordable plans for client outreach automation.
+      </p>
 
-        {/* FREE PLAN */}
+      <div style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "20px"
+      }}>
+        
         <div style={{
-          border: "2px solid #0038ff",
           padding: "20px",
-          width: "260px",
-          borderRadius: "14px"
+          borderRadius: "10px",
+          border: "1px solid #ccc"
         }}>
-          <h2>Free</h2>
-          <p style={{ fontSize: "14px" }}>Perfect for testing.</p>
-          <h3 style={{ marginTop: "10px" }}>$0 / forever</h3>
-          <ul style={{ textAlign: "left", marginTop: "15px", fontSize: "14px", lineHeight: "22px" }}>
-            <li>• 20 Emails Per Day</li>
-            <li>• Basic AI Replies</li>
-            <li>• No Follow-Up Automation</li>
-          </ul>
-
-          <a href="/" style={{ textDecoration: "none" }}>
-            <button style={{ marginTop: "20px", width: "100%" }}>Get Started</button>
-          </a>
+          <h2>Free Plan</h2>
+          <p>✔ 10 emails per day<br/>✔ Basic tone<br/>✔ Standard speed</p>
         </div>
 
-        {/* MONTHLY PLAN */}
         <div style={{
-          border: "2px solid #0038ff",
           padding: "20px",
-          width: "260px",
-          borderRadius: "14px",
-          background: "#f7faff"
+          borderRadius: "10px",
+          border: "1px solid #ccc"
         }}>
+          <h2>Pro Plan — $9/mo</h2>
+          <p>✔ Unlimited emails<br/>✔ Premium tone options<br/>✔ Faster responses</p>
+        </div>
+
+      </div>
+    </div>
+  );
+}        }}>
           <h2>Monthly</h2>
           <p style={{ fontSize: "14px" }}>Best for professionals.</p>
           <h3 style={{ marginTop: "10px" }}>$49.99 / month</h3>
