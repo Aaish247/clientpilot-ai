@@ -5,13 +5,17 @@ export async function POST(req) {
     const { service, client, extra } = await req.json();
 
     const prompt = `
-Write a professional client email.
+Write a professional outreach email.
+
 Service: ${service}
 Client: ${client}
-Extra: ${extra}
-`;
+Extra details: ${extra || "None"}
+Tone: Professional but friendly.
+Length: 120–180 words.
+Include a clear CTA.
+    `;
 
-    const apiRes = await fetch("https://api.openai.com/v1/chat/completions", {
+    const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -23,11 +27,10 @@ Extra: ${extra}
       }),
     });
 
-    const data = await apiRes.json();
+    const data = await aiRes.json();
 
-    return NextResponse.json({ output: data.choices?.[0]?.message?.content });
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return NextResponse.json({ output: data.choices[0].message.content });
+  } catch (err) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
