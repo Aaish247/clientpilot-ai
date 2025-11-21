@@ -1,8 +1,9 @@
+// app/layout.js
 import "./globals.css";
 
 export const metadata = {
   title: "ClientPilot AI",
-  description: "AI tools for clients",
+  description: "AI-powered client outreach & follow-up automation",
 };
 
 export default function RootLayout({ children }) {
