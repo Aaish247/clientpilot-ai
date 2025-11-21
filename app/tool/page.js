@@ -1,150 +1,186 @@
-// app/tool/page.js
 "use client";
 import { useState } from "react";
 
 export default function ToolPage() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
   const [service, setService] = useState("");
-  const [idealClient, setIdealClient] = useState("");
   const [country, setCountry] = useState("");
-  const [searchPlatforms, setSearchPlatforms] = useState({
-    instagram: false,
-    linkedin: false,
-    tiktok: false,
-    twitter: false,
-    websites: false,
-  });
+  const [clientType, setClientType] = useState("");
+  const [searchSources, setSearchSources] = useState([]);
+  const [goal, setGoal] = useState("");
   const [extra, setExtra] = useState("");
-  const [plan, setPlan] = useState("free");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState("");
 
-  function togglePlatform(key) {
-    setSearchPlatforms((s) => ({ ...s, [key]: !s[key] }));
-  }
+  const toggleSource = (src) => {
+    if (searchSources.includes(src)) {
+      setSearchSources(searchSources.filter((s) => s !== src));
+    } else {
+      setSearchSources([...searchSources, src]);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setResult("");
 
-    // collect platform string
-    const platforms = Object.entries(searchPlatforms)
-      .filter(([k, v]) => v)
-      .map(([k]) => k)
-      .join(", ") || "websites";
+    const res = await fetch("/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        service,
+        country,
+        clientType,
+        searchSources,
+        goal,
+        extra,
+      }),
+    });
 
-    try {
-      const res = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          email,
-          service,
-          idealClient,
-          country,
-          platforms,
-          plan,
-          extra,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (data?.output) {
-        setResult(data.output);
-      } else if (data?.error) {
-        setResult("Error: " + (data.error || "Unknown error"));
-      } else {
-        setResult("Something went wrong.");
-      }
-    } catch (err) {
-      setResult("Network error. Try again.");
-    }
-
+    const data = await res.json();
+    setResult(data.output || "Something went wrong.");
     setLoading(false);
   };
 
   return (
-    <div className="container">
-      <div className="hero center">
-        <h1>ClientPilot — Find clients, send outreach</h1>
-        <p style={{ color: "#475569" }}>
-          Fill the details below and we’ll generate high-converting outreach emails.
-        </p>
-      </div>
+    <div style={{ maxWidth: "750px", margin: "40px auto", padding: "20px" }}>
+      <h1 style={{ textAlign: "center", fontSize: "32px", fontWeight: "bold" }}>
+        ClientPilot AI – Outreach Generator
+      </h1>
 
-      <div className="card">
-        <form className="form-grid" onSubmit={handleSubmit}>
-          <label>
-            Your name
-            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" />
-          </label>
+      <form
+        onSubmit={handleSubmit}
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "18px",
+          marginTop: "25px",
+        }}
+      >
+        <input
+          type="text"
+          placeholder="1) What service do you offer?"
+          value={service}
+          onChange={(e) => setService(e.target.value)}
+          required
+          style={inputStyle}
+        />
 
-          <label>
-            Your email (for replies)
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@domain.com" />
-          </label>
+        <select
+          value={country}
+          onChange={(e) => setCountry(e.target.value)}
+          required
+          style={inputStyle}
+        >
+          <option value="">2) Client's country</option>
+          <option>United States</option>
+          <option>United Kingdom</option>
+          <option>Canada</option>
+          <option>Australia</option>
+          <option>India</option>
+          <option>Germany</option>
+          <option>France</option>
+          <option>UAE</option>
+        </select>
 
-          <label>
-            What service do you offer?
-            <input type="text" value={service} onChange={(e) => setService(e.target.value)} placeholder="e.g. Video Editing, SMM, Web Design" required />
-          </label>
+        <select
+          value={clientType}
+          onChange={(e) => setClientType(e.target.value)}
+          required
+          style={inputStyle}
+        >
+          <option value="">3) Who are you targeting?</option>
+          <option>Local businesses</option>
+          <option>E-commerce brands</option>
+          <option>Real estate agents</option>
+          <option>Coaches / consultants</option>
+          <option>Agencies</option>
+          <option>Startups</option>
+        </select>
 
-          <label>
-            Who is your ideal client?
-            <input type="text" value={idealClient} onChange={(e) => setIdealClient(e.target.value)} placeholder="e.g. Fitness influencers, DTC brands" />
-          </label>
+        <div style={{ fontWeight: "bold" }}>
+          4) Where should we search (AAPS)?
+        </div>
 
-          <label>
-            Target country / location
-            <input type="text" value={country} onChange={(e) => setCountry(e.target.value)} placeholder="USA, UK, Europe or city" />
-          </label>
-
-          <div>
-            <label style={{ display: "block", marginBottom: 8, fontWeight: 700 }}>Where should we search for clients? (choose all)</label>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <label style={{ fontWeight: 600 }}>
-                <input type="checkbox" checked={searchPlatforms.instagram} onChange={() => togglePlatform("instagram")} /> Instagram
+        <div style={checkboxWrap}>
+          {["Instagram", "LinkedIn", "Facebook", "Website", "Google Maps"].map(
+            (src) => (
+              <label key={src} style={checkboxRow}>
+                <input
+                  type="checkbox"
+                  checked={searchSources.includes(src)}
+                  onChange={() => toggleSource(src)}
+                />
+                {src}
               </label>
-              <label style={{ fontWeight: 600 }}>
-                <input type="checkbox" checked={searchPlatforms.linkedin} onChange={() => togglePlatform("linkedin")} /> LinkedIn
-              </label>
-              <label style={{ fontWeight: 600 }}>
-                <input type="checkbox" checked={searchPlatforms.tiktok} onChange={() => togglePlatform("tiktok")} /> TikTok
-              </label>
-              <label style={{ fontWeight: 600 }}>
-                <input type="checkbox" checked={searchPlatforms.twitter} onChange={() => togglePlatform("twitter")} /> Twitter/X
-              </label>
-              <label style={{ fontWeight: 600 }}>
-                <input type="checkbox" checked={searchPlatforms.websites} onChange={() => togglePlatform("websites")} /> Websites / Google
-              </label>
-            </div>
-          </div>
+            )
+          )}
+        </div>
 
-          <label>
-            Choose plan
-            <select value={plan} onChange={(e) => setPlan(e.target.value)}>
-              <option value="free">Free — 20 emails/day</option>
-              <option value="monthly">Monthly — 200 emails/day</option>
-              <option value="lifetime">Lifetime — 200 emails/day</option>
-            </select>
-          </label>
+        <input
+          type="text"
+          placeholder="5) What’s your goal? (Book a call, sell a service, etc.)"
+          value={goal}
+          onChange={(e) => setGoal(e.target.value)}
+          required
+          style={inputStyle}
+        />
 
-          <label>
-            Extra details (optional)
-            <textarea value={extra} onChange={(e) => setExtra(e.target.value)} placeholder="Tone, examples, notes..." rows={4} />
-          </label>
+        <textarea
+          placeholder="6) Extra details (optional)"
+          value={extra}
+          onChange={(e) => setExtra(e.target.value)}
+          rows={4}
+          style={inputStyle}
+        ></textarea>
 
-          <button className="btn btn-primary" type="submit" style={{ marginTop: 8 }}>
-            {loading ? "Generating..." : "Generate Email"}
-          </button>
-        </form>
+        <button type="submit" style={buttonStyle}>
+          {loading ? "Generating..." : "Generate Outreach Email"}
+        </button>
+      </form>
 
-        {result && <div className="result">{result}</div>}
-      </div>
+      {result && (
+        <div style={resultBox}>
+          <h2>Generated Email</h2>
+          <pre style={{ whiteSpace: "pre-wrap" }}>{result}</pre>
+        </div>
+      )}
     </div>
   );
 }
+
+const inputStyle = {
+  padding: "12px",
+  borderRadius: "8px",
+  border: "1px solid #ccc",
+  fontSize: "15px",
+};
+
+const buttonStyle = {
+  padding: "14px",
+  background: "#0038ff",
+  color: "white",
+  borderRadius: "8px",
+  border: "none",
+  fontSize: "17px",
+  cursor: "pointer",
+  fontWeight: "bold",
+};
+
+const checkboxWrap = {
+  display: "flex",
+  gap: "15px",
+  flexWrap: "wrap",
+};
+
+const checkboxRow = {
+  display: "flex",
+  alignItems: "center",
+  gap: "6px",
+};
+
+const resultBox = {
+  marginTop: "30px",
+  padding: "20px",
+  background: "#f5f5f5",
+  borderRadius: "10px",
+};
