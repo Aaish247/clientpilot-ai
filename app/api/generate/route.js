@@ -1,36 +1,77 @@
+// app/api/generate/route.js
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
   try {
-    const { service, client, extra } = await req.json();
+    const body = await req.json();
 
+    // expected fields from UI
+    const {
+      name = "",
+      email = "",
+      service = "",
+      idealClient = "",
+      country = "",
+      platforms = "",
+      plan = "free",
+      extra = "",
+    } = body;
+
+    // build a strong prompt
     const prompt = `
-Write a professional outreach email.
+You are an expert outreach copywriter. Write ONE cold outreach email (subject + body) for the user below.
+Make it short, human, personalized and professional.
+Use the details to tailor the email and include one clear CTA (call to action).
+Keep length around 120-180 words for the body.
 
-Service: ${service}
-Client: ${client}
-Extra details: ${extra || "None"}
-Tone: Professional but friendly.
-Length: 120–180 words.
-Include a clear CTA.
+User details:
+- Name: ${name}
+- Email (reply-to): ${email}
+- Service: ${service}
+- Ideal client: ${idealClient}
+- Target country/location: ${country}
+- Platforms to search on: ${platforms}
+- Selected plan: ${plan}
+- Extra info: ${extra || "None"}
+
+Output format (exactly):
+Subject: <one-line subject>
+Body:
+<email body>
+
+Make it friendly, confident, and short.
     `;
+
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json({ error: "Missing OPENAI_API_KEY in server." }, { status: 500 });
+    }
 
     const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
         messages: [{ role: "user", content: prompt }],
+        max_tokens: 600,
+        temperature: 0.2,
       }),
     });
 
     const data = await aiRes.json();
 
-    return NextResponse.json({ output: data.choices[0].message.content });
+    const output = data?.choices?.[0]?.message?.content || data?.error?.message || null;
+
+    if (!output) {
+      return NextResponse.json({ error: "AI returned no output." }, { status: 500 });
+    }
+
+    return NextResponse.json({ output });
   } catch (err) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error("API error:", err);
+    return NextResponse.json({ error: String(err) }, { status: 500 });
   }
 }
