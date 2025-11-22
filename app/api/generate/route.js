@@ -2,92 +2,61 @@ import { NextResponse } from "next/server";
 
 export async function POST(req) {
   try {
-    const body = await req.json();
+    const { name, email, service, countries, apps, budget, extra } =
+      await req.json();
 
-    // safe defaults
-    const {
-      name = "",
-      email = "",
-      services = [],
-      countries = [],
-      platforms = [],
-      plan = "free",
-      budget = "< $500",
-      goal = "",
-      extra = ""
-    } = body || {};
-
-    // Build prompt for OpenAI — ask for multiple pieces
     const prompt = `
-You are a professional outreach copywriter. Based on the following user data, generate:
-
-1) A short attention-grabbing SUBJECT line (one)
-2) FIVE alternative subject line options (comma separated)
-3) MAIN EMAIL (120-170 words) personalized and referencing the user's name/email when appropriate and including a single clear CTA (book a call / reply / calendar link)
-4) Icebreaker sentence (one or two short sentences)
-5) FOLLOW-UP #1 (short, friendly reminder)
-6) FOLLOW-UP #2 (final gentle nudge)
-7) A DM-friendly short outreach version (for Instagram/LinkedIn direct message)
-Make the tone friendly, confident, value-first. Tailor details to the user's selected services and target client. Keep the output clean and clearly labeled sections.
-
-User details:
+User Details:
 Name: ${name}
-Reply email: ${email}
-Services: ${services.join(", ") || "Not provided"}
-Target countries: ${countries.join(", ") || "Global"}
-Platforms to search: ${platforms.join(", ") || "Websites"}
-Selected plan: ${plan}
-Target client budget: ${budget}
-Primary goal: ${goal}
-Extra info: ${extra || "None"}
+Email: ${email}
 
-Output format EXACTLY:
-SUBJECT: <single subject line>
-SUBJECT_OPTIONS: <opt1> | <opt2> | <opt3> | <opt4> | <opt5>
-ICEBREAKER: <one-two sentences>
-BODY:
-<email body>
+Service: ${service}
+Target Countries: ${countries.join(", ")}
+Search Apps: ${apps.join(", ")}
+Budget: ${budget}
+Extra: ${extra || "None"}
 
-FOLLOW_UP_1:
-<text>
-
-FOLLOW_UP_2:
-<text>
-
-DM:
-<short dm version>
-
-Keep language professional and natural. Don't include internal commentary.
+Write 5 different outreach emails, each with:
+- Subject line
+- 120–170 words
+- Friendly + professional tone
+- Based on the user's service + target market
+- Do NOT send follow-ups
+- Do NOT generate fake information
 `;
 
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json({ error: "Missing OPENAI_API_KEY on server." }, { status: 500 });
+    const response = await fetch(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [{ role: "user", content: prompt }],
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    // If OpenAI returns an error
+    if (data.error) {
+      return NextResponse.json(
+        { error: data.error.message },
+        { status: 400 }
+      );
     }
 
-    const openAIres = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [{ role: "user", content: prompt }],
-        max_tokens: 900,
-        temperature: 0.18
-      })
+    return NextResponse.json({
+      emails: data.choices[0].message.content,
     });
-
-    const data = await openAIres.json();
-
-    const text = data?.choices?.[0]?.message?.content || data?.error?.message || null;
-    if (!text) {
-      return NextResponse.json({ error: "AI returned no output" }, { status: 500 });
-    }
-
-    return NextResponse.json({ output: text });
   } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+    return NextResponse.json(
+      { error: err.message },
+      { status: 500 }
+    );
   }
 }
