@@ -8,11 +8,11 @@ export async function POST(req) {
       name,
       email,
       service,
-      selectedCountry,
-      selectedApps,
+      countries,     // your frontend sends this
+      apps,          // your frontend sends this
       budget,
-      extraInfo,
-      tone
+      extra,
+      variants
     } = body;
 
     if (!process.env.OPENAI_API_KEY) {
@@ -22,25 +22,19 @@ export async function POST(req) {
       );
     }
 
-    // Build Prompt
     const prompt = `
-You are an expert cold-email copywriter.
-
-Write **5 different outreach emails**.
+Write ${variants || 5} outreach emails.
 Each email must include:
-- subject line
-- 120–170 word body
-- written in this tone: ${tone}
-- personalized for this service: ${service}
-- targeting: ${selectedCountry}
-- platforms: ${selectedApps?.join(", ") || "None"}
-- budget: ${budget}
-- extra notes: ${extraInfo || "None"}
-- no fake details
-- no long intros
-- make each email different style
-
-Number them 1 to 5.
+- Subject line
+- 120-170 words
+- Tone: friendly professional
+- Service: ${service}
+- Target countries: ${countries?.join(", ") || "None"}
+- Platforms: ${apps?.join(", ") || "None"}
+- Budget: ${budget}
+- Extra notes: ${extra || "None"}
+- No fake info
+- Number the emails 1 to ${variants || 5}
     `;
 
     const res = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -52,22 +46,32 @@ Number them 1 to 5.
       body: JSON.stringify({
         model: "gpt-4o-mini",
         messages: [{ role: "user", content: prompt }],
-        max_tokens: 900,
+        max_tokens: 1200,
       }),
     });
 
     const data = await res.json();
+
     if (data.error) {
       return NextResponse.json({ error: data.error }, { status: 400 });
     }
 
-    const output = data.choices?.[0]?.message?.content || null;
+    const text = data.choices?.[0]?.message?.content || "";
 
-    if (!output) {
-      return NextResponse.json({ error: "AI returned no output." }, { status: 400 });
+    if (!text.trim()) {
+      return NextResponse.json(
+        { error: "AI returned nothing." },
+        { status: 400 }
+      );
     }
 
-    return NextResponse.json({ emails: output });
+    // split by numbering
+    const emails = text
+      .split(/\n\s*\d+\.\s*/g)
+      .filter(x => x.trim().length > 0)
+      .slice(0, variants || 5);
+
+    return NextResponse.json({ outputs: emails });
 
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 });
