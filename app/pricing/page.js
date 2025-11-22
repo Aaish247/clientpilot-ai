@@ -1,53 +1,52 @@
-// app/pricing/page.js
-export default function Pricing() {
+export default function PricingPage(){
   return (
-    <div className="container">
-      <div className="hero center">
-        <h1 style={{ fontSize: 32 }}>Pricing Plans</h1>
-        <p style={{ color: "#475569" }}>Pick the right plan for your outreach.</p>
-      </div>
+    <main className="container">
+      <header className="header"><div className="logo"><div className="logo-dot"/><div className="brand">ClientPilot AI</div></div></header>
 
-      <div className="plans">
-        <div className="plan">
-          <h3>Free</h3>
-          <h2 style={{ marginTop: 6 }}>$0</h2>
-          <ul style={{ marginTop: 10, color: "#475569" }}>
-            <li>20 emails/day</li>
-            <li>AI-generated outreach</li>
-            <li>Basic follow-up email</li>
-            <li>Limited priority</li>
-            <li>Testing & trial</li>
-          </ul>
-          <a href="/tool" className="btn btn-primary" style={{ display: "block", marginTop: 12 }}>Start Free</a>
-        </div>
+      <section style={{marginTop:18}}>
+        <h1>Pricing Plans</h1>
+        <p className="small-muted">Choose the plan that fits you. Payments handled by Gumroad (link later).</p>
 
-        <div className="plan highlight">
-          <h3>Monthly</h3>
-          <h2 style={{ marginTop: 6 }}>$49.99 / month</h2>
-          <ul style={{ marginTop: 10, color: "#475569" }}>
-            <li>200 emails/day</li>
-            <li>AI-crafted personalization</li>
-            <li>3-step follow-up automation</li>
-            <li>Multi-platform searching</li>
-            <li>Priority support</li>
-          </ul>
-          {/* Put Gumroad link later */}
-          <a href="/tool" className="btn btn-primary" style={{ display: "block", marginTop: 12 }}>Get Monthly</a>
-        </div>
+        <div className="plans-grid">
+          <div className="plan-card">
+            <h3>Free</h3>
+            <h2>$0 / forever</h2>
+            <ul>
+              <li>20 emails / day</li>
+              <li>Choose up to 3 apps</li>
+              <li>Basic AI messages</li>
+              <li>Email inbox demo</li>
+            </ul>
+            <a href="/"> <button className="btn-primary">Get Free</button></a>
+          </div>
 
-        <div className="plan">
-          <h3>Lifetime</h3>
-          <h2 style={{ marginTop: 6 }}>$99.99 one-time</h2>
-          <ul style={{ marginTop: 10, color: "#475569" }}>
-            <li>200 emails/day</li>
-            <li>All Monthly features</li>
-            <li>Lifetime updates</li>
-            <li>VIP support</li>
-            <li>Commercial use</li>
-          </ul>
-          <a href="/tool" className="btn btn-primary" style={{ display: "block", marginTop: 12 }}>Buy Lifetime</a>
+          <div className="plan-card" style={{border:'2px solid #2563EB',boxShadow:'0 16px 40px rgba(37,99,235,0.12)'}}>
+            <h3>Monthly</h3>
+            <h2>$49.99 / month</h2>
+            <ul>
+              <li>200 emails / day</li>
+              <li>Unlimited apps & countries</li>
+              <li>Follow-up automation (paid)</li>
+              <li>Priority processing</li>
+              <li>50 saved campaigns</li>
+            </ul>
+            <a href="#"><button className="btn-primary">Buy Monthly</button></a>
+          </div>
+
+          <div className="plan-card">
+            <h3>Lifetime</h3>
+            <h2>$149.99</h2>
+            <ul>
+              <li>Everything in Monthly</li>
+              <li>Lifetime updates</li>
+              <li>VIP support</li>
+            </ul>
+            <a href="#"><button className="btn-primary">Buy Lifetime</button></a>
+          </div>
         </div>
-      </div>
-    </div>
+      </section>
+
+      <footer className="footer">© {new Date().getFullYear()} ClientPilot AI</footer>
+    </main>
   );
 }
