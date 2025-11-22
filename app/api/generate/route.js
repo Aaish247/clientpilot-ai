@@ -3,39 +3,40 @@ import { NextResponse } from "next/server";
 export async function POST(req) {
   try {
     const body = await req.json();
-
-    const {
-      name,
-      email,
-      service,
-      countries,     // your frontend sends this
-      apps,          // your frontend sends this
-      budget,
-      extra,
-      variants
-    } = body;
+    const { name, email, service, countries, apps, budget, extra } = body;
 
     if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json(
-        { error: "Missing OPENAI_API_KEY" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "Missing OPENAI_API_KEY" }, { status: 500 });
     }
 
+    // FORCE OpenAI to return ARRAY of 5 emails cleanly
     const prompt = `
-Write ${variants || 5} outreach emails.
-Each email must include:
-- Subject line
-- 120-170 words
-- Tone: friendly professional
-- Service: ${service}
-- Target countries: ${countries?.join(", ") || "None"}
-- Platforms: ${apps?.join(", ") || "None"}
-- Budget: ${budget}
-- Extra notes: ${extra || "None"}
-- No fake info
-- Number the emails 1 to ${variants || 5}
-    `;
+Generate exactly 5 separate outreach emails as JSON array.
+Return only pure JSON, no extra text.
+
+User:
+Name: ${name}
+Email: ${email}
+Service: ${service}
+Countries: ${countries.join(", ")}
+Apps: ${apps.join(", ")}
+Budget: ${budget}
+Extra: ${extra || "None"}
+
+Each email must contain:
+- "subject"
+- "body" (120–170 words)
+- friendly professional tone
+
+Return format:
+[
+  { "subject": "...", "body": "..." },
+  { "subject": "...", "body": "..." },
+  { "subject": "...", "body": "..." },
+  { "subject": "...", "body": "..." },
+  { "subject": "...", "body": "..." }
+]
+`;
 
     const res = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -47,31 +48,37 @@ Each email must include:
         model: "gpt-4o-mini",
         messages: [{ role: "user", content: prompt }],
         max_tokens: 1200,
-      }),
+        temperature: 0.7
+      })
     });
 
     const data = await res.json();
-
     if (data.error) {
       return NextResponse.json({ error: data.error }, { status: 400 });
     }
 
-    const text = data.choices?.[0]?.message?.content || "";
+    // AI returns JSON array → parse it
+    let text = data.choices?.[0]?.message?.content || "[]";
 
-    if (!text.trim()) {
-      return NextResponse.json(
-        { error: "AI returned nothing." },
-        { status: 400 }
-      );
+    let emails;
+    try {
+      emails = JSON.parse(text);
+    } catch {
+      // fallback: try to extract JSON
+      const match = text.match(/\[[\s\S]*\]/);
+      emails = match ? JSON.parse(match[0]) : [];
     }
 
-    // split by numbering
-    const emails = text
-      .split(/\n\s*\d+\.\s*/g)
-      .filter(x => x.trim().length > 0)
-      .slice(0, variants || 5);
+    if (!Array.isArray(emails) || emails.length === 0) {
+      return NextResponse.json({ error: "No emails generated" }, { status: 400 });
+    }
 
-    return NextResponse.json({ outputs: emails });
+    // Convert each email into one block for frontend
+    const formatted = emails.map((e, i) =>
+      `Subject: ${e.subject}\n\n${e.body}`
+    );
+
+    return NextResponse.json({ emails: formatted.slice(0, 5) });
 
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 });
