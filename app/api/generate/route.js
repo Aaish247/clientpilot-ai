@@ -9,36 +9,37 @@ export async function POST(req) {
       return NextResponse.json({ error: "Missing OPENAI_API_KEY" }, { status: 500 });
     }
 
-    // FORCE OpenAI to return ARRAY of 5 emails cleanly
     const prompt = `
-Generate exactly 5 separate outreach emails as JSON array.
-Return only pure JSON, no extra text.
+Generate 5 outreach email variations. Each email must include:
+- Subject line
+- 120–170 word body
+- Tone types: Friendly, Motivated, Greedy/Money-focused, Professional, Simple
 
-User:
-Name: ${name}
-Email: ${email}
-Service: ${service}
-Countries: ${countries.join(", ")}
-Apps: ${apps.join(", ")}
-Budget: ${budget}
-Extra: ${extra || "None"}
+User details:
+- Name: ${name}
+- Email: ${email}
+- Service: ${service}
+- Countries: ${countries.join(", ")}
+- Apps/Sources: ${apps.join(", ")}
+- Budget: ${budget}
+- Extra Notes: ${extra || "None"}
 
-Each email must contain:
-- "subject"
-- "body" (120–170 words)
-- friendly professional tone
+Format strictly like:
 
-Return format:
-[
-  { "subject": "...", "body": "..." },
-  { "subject": "...", "body": "..." },
-  { "subject": "...", "body": "..." },
-  { "subject": "...", "body": "..." },
-  { "subject": "...", "body": "..." }
-]
-`;
+1.
+Subject: ...
+Body: ...
 
-    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+2.
+Subject: ...
+Body: ...
+
+3.
+...
+    `.trim();
+
+    // ⭐ NEW OPENAI API FORMAT
+    const res = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -46,40 +47,25 @@ Return format:
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
-        messages: [{ role: "user", content: prompt }],
-        max_tokens: 1200,
-        temperature: 0.7
-      })
+        input: prompt,
+        max_output_tokens: 1200,
+      }),
     });
 
     const data = await res.json();
+
     if (data.error) {
       return NextResponse.json({ error: data.error }, { status: 400 });
     }
 
-    // AI returns JSON array → parse it
-    let text = data.choices?.[0]?.message?.content || "[]";
+    // ⭐ NEW FIELD = data.output_text
+    const output = data.output_text?.[0] || "";
 
-    let emails;
-    try {
-      emails = JSON.parse(text);
-    } catch {
-      // fallback: try to extract JSON
-      const match = text.match(/\[[\s\S]*\]/);
-      emails = match ? JSON.parse(match[0]) : [];
+    if (!output || output.length < 10) {
+      return NextResponse.json({ error: "EMPTY_RESPONSE" }, { status: 500 });
     }
 
-    if (!Array.isArray(emails) || emails.length === 0) {
-      return NextResponse.json({ error: "No emails generated" }, { status: 400 });
-    }
-
-    // Convert each email into one block for frontend
-    const formatted = emails.map((e, i) =>
-      `Subject: ${e.subject}\n\n${e.body}`
-    );
-
-    return NextResponse.json({ emails: formatted.slice(0, 5) });
-
+    return NextResponse.json({ emails: output });
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 });
   }
