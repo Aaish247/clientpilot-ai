@@ -1,200 +1,180 @@
 "use client";
-import { useState, useMemo } from "react";
 
-// minimal country list in code — full list provided below the file if you want to paste it
-const TOP_COUNTRIES = ["United States","United Kingdom","Canada","United Arab Emirates","Australia"];
+import { useState } from "react";
 
-// short apps list for demonstration (we include many in the UI)
+const TOP_COUNTRIES = ["USA", "UK", "UAE", "Canada", "Australia"];
+
+const ALL_COUNTRIES = {
+  A: ["Afghanistan", "Albania", "Algeria", "Andorra", "Angola"],
+  B: ["Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belgium"],
+  C: ["Cambodia", "Cameroon", "Canada", "Chad", "Chile"],
+  D: ["Denmark", "Dominica", "Dominican Republic"],
+  E: ["Ecuador", "Egypt", "El Salvador", "Estonia"],
+  F: ["Fiji", "Finland", "France"],
+  G: ["Gabon", "Gambia", "Georgia", "Germany", "Ghana"],
+  H: ["Haiti", "Honduras", "Hungary"],
+  I: ["Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Italy"],
+  J: ["Jamaica", "Japan", "Jordan"],
+  K: ["Kazakhstan", "Kenya", "Kuwait", "Kyrgyzstan"],
+  L: ["Laos", "Latvia", "Lebanon", "Liberia", "Libya", "Lithuania"],
+  M: ["Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Mexico", "Morocco"],
+  N: ["Namibia", "Nepal", "Netherlands", "New Zealand", "Nigeria", "Norway"],
+  O: ["Oman"],
+  P: ["Pakistan", "Palestine", "Panama", "Paraguay", "Peru", "Philippines", "Poland", "Portugal"],
+  Q: ["Qatar"],
+  R: ["Romania", "Russia", "Rwanda"],
+  S: ["Saudi Arabia", "Senegal", "Serbia", "Singapore", "Slovakia", "Slovenia", "Somalia", "Spain", "Sri Lanka", "Sweden", "Switzerland"],
+  T: ["Taiwan", "Tajikistan", "Tanzania", "Thailand", "Tunisia", "Turkey"],
+  U: ["Uganda", "Ukraine", "UAE", "UK", "USA", "Uruguay", "Uzbekistan"],
+  V: ["Vanuatu", "Venezuela", "Vietnam"],
+  W: ["West Bank"],
+  Y: ["Yemen"],
+  Z: ["Zambia", "Zimbabwe"],
+};
+
 const APPS = [
-  "LinkedIn","Instagram","Facebook","YouTube","X/Twitter","Dribbble","Behance","Upwork","Fiverr","Guru",
-  "Freelancer","Crunchbase","AngelList","Clutch","Yelp","Google Maps","Apollo","RocketReach","Shopify stores","Etsy",
-  "Amazon sellers","TikTok","Pinterest","ProductHunt","GitHub"
+  "Instagram",
+  "LinkedIn",
+  "TikTok",
+  "Facebook",
+  "Upwork",
+  "Fiverr",
+  "Freelancer",
+  "Behance",
+  "Dribbble",
+  "Email",
+  "YouTube",
+  "Pinterest",
+  "Twitter",
+  "Guru",
+  "PeoplePerHour",
 ];
 
-export default function ToolPage(){
-  const [name,setName] = useState("");
-  const [email,setEmail] = useState("");
-  const [service,setService] = useState("");
-  const [selectedCountries,setSelectedCountries] = useState([]);
-  const [selectedApps,setSelectedApps] = useState([]);
-  const [budget,setBudget] = useState("");
-  const [extra,setExtra] = useState("");
-  const [loading,setLoading] = useState(false);
-  const [result,setResult] = useState("");
+export default function ToolPage() {
+  const [openLetter, setOpenLetter] = useState(null);
+  const [selectedCountries, setSelectedCountries] = useState([]);
+  const [selectedApps, setSelectedApps] = useState([]);
+  const [service, setService] = useState("");
 
-  // For demo: change to 'paid' to simulate paid user
-  const userPlan = "free"; // 'free' or 'paid' — later replace with real auth logic
+  const MAX_FREE_APPS = 3;
 
-  const countryLimit = userPlan === 'free' ? 3 : 9999;
+  const toggleLetter = (letter) => {
+    setOpenLetter(openLetter === letter ? null : letter);
+  };
 
-  function toggleCountry(c){
-    if(selectedCountries.includes(c)){
-      setSelectedCountries(selectedCountries.filter(x=>x!==c));
-    } else {
-      if(selectedCountries.length >= countryLimit){
-        alert('Free plan limit: max ' + countryLimit + ' countries. Upgrade to unlock all.');
-        return;
-      }
-      setSelectedCountries([...selectedCountries,c]);
+  const toggleCountry = (c) => {
+    setSelectedCountries((prev) =>
+      prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]
+    );
+  };
+
+  const toggleApp = (app) => {
+    if (!selectedApps.includes(app)) {
+      if (selectedApps.length >= MAX_FREE_APPS) return;
     }
-  }
-
-  function toggleApp(a){
-    if(selectedApps.includes(a)) setSelectedApps(selectedApps.filter(x=>x!==a));
-    else {
-      if(userPlan==='free' && selectedApps.length>=3){
-        alert('Free plan can only choose 3 apps.');
-        return;
-      }
-      setSelectedApps([...selectedApps,a]);
-    }
-  }
-
-  async function handleSubmit(e){
-    e.preventDefault();
-    if(!name||!email||!service||selectedCountries.length===0||selectedApps.length===0){
-      alert('Please fill name, email, service, choose at least 1 country and 1 app.');
-      return;
-    }
-
-    setLoading(true);
-    setResult('');
-
-    try{
-      const res = await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-        name,email,service,countries:selectedCountries,apps:selectedApps,budget,extra
-      })});
-      const data = await res.json();
-      if(data.error) setResult('Error: ' + (data.error.message || data.error));
-      else setResult(data.emails || JSON.stringify(data));
-    }catch(err){
-      setResult('Network error');
-    }finally{setLoading(false)}
-  }
-
-  const selectedTags = useMemo(()=>selectedCountries.concat(selectedApps),[selectedCountries,selectedApps]);
+    setSelectedApps((prev) =>
+      prev.includes(app) ? prev.filter((x) => x !== app) : [...prev, app]
+    );
+  };
 
   return (
-    <main className="container">
-      <header className="header">
-        <div className="logo"><div className="logo-dot"/><div className="brand">ClientPilot AI</div></div>
-        <nav><a href="/pricing">See plans & upgrade →</a></nav>
-      </header>
+    <div className="w-full max-w-xl mx-auto px-4 py-6">
+      <h1 className="text-2xl font-bold text-center mb-6">
+        Your Client Finder
+      </h1>
 
-      <section style={{marginTop:14}}>
-        <div className="card">
-          <h2>Tell us what you do</h2>
-          <p className="small-muted">We’ll search and send outreach emails based on this. This is a demo UI — sign up to use full features.</p>
+      {/* Service Input */}
+      <div className="mb-6">
+        <label className="font-semibold">Your Service</label>
+        <input
+          type="text"
+          placeholder="Example: Social Media Manager"
+          className="w-full mt-2 p-3 rounded border bg-white"
+          value={service}
+          onChange={(e) => setService(e.target.value)}
+        />
+      </div>
 
-          <form onSubmit={handleSubmit} style={{marginTop:12,display:'grid',gap:12}}>
-            <div>
-              <label><strong>Your name</strong></label>
-              <input className="input" value={name} onChange={e=>setName(e.target.value)} placeholder="Your full name"/>
-            </div>
+      {/* Top Countries */}
+      <div className="mb-4">
+        <p className="font-semibold mb-2">Top Countries</p>
+        <div className="flex flex-wrap gap-2">
+          {TOP_COUNTRIES.map((c) => (
+            <button
+              key={c}
+              onClick={() => toggleCountry(c)}
+              className={`px-3 py-2 rounded border ${
+                selectedCountries.includes(c) ? "border-blue-500" : ""
+              }`}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+      </div>
 
-            <div>
-              <label><strong>Your email (for outreach)</strong></label>
-              <input className="input" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com"/>
-            </div>
+      {/* A-Z Countries */}
+      <div className="border rounded p-3 bg-white">
+        <p className="font-semibold mb-2">Choose Countries</p>
 
-            <div>
-              <label><strong>What service do you offer?</strong></label>
-              <input className="input" value={service} onChange={e=>setService(e.target.value)} placeholder="E.g. Social media ads, Web design, Video editing"/>
-            </div>
+        <div className="max-h-48 overflow-y-scroll pr-2">
+          {Object.keys(ALL_COUNTRIES).map((letter) => (
+            <div key={letter} className="mb-2">
+              <button
+                className="w-full text-left font-semibold py-1"
+                onClick={() => toggleLetter(letter)}
+              >
+                {letter} {openLetter === letter ? "▼" : "▶"}
+              </button>
 
-            <div>
-              <label><strong>From where should we search clients?</strong></label>
-              <div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:8}}>
-                {APPS.map(a=> (
-                  <button type="button" key={a} onClick={()=>toggleApp(a)} className="tag" style={{border:selectedApps.includes(a)?'2px solid #2563EB':'none',background:selectedApps.includes(a)?'#EEF2FF':'#F7FAFF'}}>{a}</button>
-                ))}
-              </div>
-              <div className="small-muted" style={{marginTop:8}}>Free plan: choose up to 3 apps. Paid: unlimited.</div>
-            </div>
-
-            <div>
-              <label><strong>Target countries</strong></label>
-              <div className="country-box" style={{marginTop:8}}>
-                <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-                  {TOP_COUNTRIES.map(c=> (
-                    <button key={c} type="button" onClick={()=>toggleCountry(c)} className="tag" style={{border:selectedCountries.includes(c)?'2px solid #2563EB':'none',background:selectedCountries.includes(c)?'#EEF2FF':'#F7FAFF'}}>{c}</button>
+              {openLetter === letter && (
+                <div className="ml-3">
+                  {ALL_COUNTRIES[letter].map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => toggleCountry(c)}
+                      className={`block w-full text-left py-1 px-2 rounded ${
+                        selectedCountries.includes(c)
+                          ? "bg-blue-100 border-blue-500 border"
+                          : "border"
+                      } mb-1`}
+                    >
+                      {c}
+                    </button>
                   ))}
                 </div>
-
-                <div className="country-section">
-                  {/* Alphabet groups A, B, C collapsed style — for demo we show small set. Replace with full list if needed */}
-                  <div>
-                    <div style={{marginTop:10,fontWeight:700}}>A ▼</div>
-                    <div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:6}}>
-                      {['Afghanistan','Albania','Algeria','Andorra','Angola'].map(c=> (
-                        <button key={c} type="button" onClick={()=>toggleCountry(c)} className="tag" style={{border:selectedCountries.includes(c)?'2px solid #2563EB':'none',background:selectedCountries.includes(c)?'#EEF2FF':'#F7FAFF'}}>{c}</button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div style={{marginTop:10,fontWeight:700}}>B ▼</div>
-                    <div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:6}}>
-                      {['Bahamas','Bahrain','Bangladesh','Barbados','Belarus'].map(c=> (
-                        <button key={c} type="button" onClick={()=>toggleCountry(c)} className="tag" style={{border:selectedCountries.includes(c)?'2px solid #2563EB':'none',background:selectedCountries.includes(c)?'#EEF2FF':'#F7FAFF'}}>{c}</button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div style={{marginTop:10,fontWeight:700}}>C ▶</div>
-                    <div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:6}}>
-                      {['Cambodia','Cameroon','Canada','Cape Verde','Chad'].map(c=> (
-                        <button key={c} type="button" onClick={()=>toggleCountry(c)} className="tag" style={{border:selectedCountries.includes(c)?'2px solid #2563EB':'none',background:selectedCountries.includes(c)?'#EEF2FF':'#F7FAFF'}}>{c}</button>
-                      ))}
-                    </div>
-                  </div>
-
-                </div>
-              </div>
-              <div className="small-muted" style={{marginTop:8}}>Free plan: max 3 countries. Paid: select all.</div>
+              )}
             </div>
-
-            <div>
-              <label><strong>Target budget</strong></label>
-              <div style={{display:'flex',gap:8,marginTop:8}}>
-                {['$0-$500','$500-$1500','$1500-$5000','$5000-$10000','$10000+'].map(b=> (
-                  <button type="button" key={b} onClick={()=>setBudget(b)} className="tag" style={{border:budget===b?'2px solid #2563EB':'none',background:budget===b?'#EEF2FF':'#F7FAFF'}}>{b}</button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label><strong>Anything else (optional)</strong></label>
-              <textarea className="input" value={extra} onChange={e=>setExtra(e.target.value)} placeholder="Tone, niche details, examples..." style={{minHeight:110}} />
-            </div>
-
-            <div style={{display:'flex',gap:10}}>
-              <button className="btn-primary" disabled={loading} type="submit">{loading? 'Working...':'Start (Demo)'}</button>
-              <a href="/pricing"><button type="button" className="btn-ghost">See plans</button></a>
-            </div>
-          </form>
-
-          {selectedTags.length>0 && (
-            <div style={{marginTop:12}}>
-              <strong>Selected:</strong>
-              <div style={{marginTop:8}}>
-                {selectedCountries.map(c=> <span key={c} className="tag">{c}</span>)}
-                {selectedApps.map(a=> <span key={a} className="tag">{a}</span>)}
-              </div>
-            </div>
-          )}
-
-          {result && (
-            <div style={{marginTop:14,padding:12,background:'#F8FAFF',borderRadius:10}}>
-              <pre style={{whiteSpace:'pre-wrap'}}>{result}</pre>
-            </div>
-          )}
-
+          ))}
         </div>
-      </section>
+      </div>
 
-      <footer className="footer">© {new Date().getFullYear()} ClientPilot AI</footer>
-    </main>
+      {/* Apps */}
+      <div className="mt-6">
+        <p className="font-semibold mb-2">Where should AI search clients?</p>
+        <p className="text-sm text-gray-500 mb-1">
+          (Free plan: select up to {MAX_FREE_APPS})
+        </p>
+
+        <div className="border bg-white rounded p-2 max-h-40 overflow-y-scroll">
+          {APPS.map((app) => (
+            <button
+              key={app}
+              onClick={() => toggleApp(app)}
+              className={`w-full text-left py-2 px-2 mb-1 rounded border ${
+                selectedApps.includes(app) ? "border-blue-500" : ""
+              }`}
+            >
+              {app}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Continue */}
+      <button className="w-full bg-blue-600 text-white py-3 rounded mt-6">
+        Continue
+      </button>
+    </div>
   );
 }
