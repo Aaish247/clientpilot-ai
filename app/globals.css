@@ -1,20 +1,20 @@
-/* Simple base styles */
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Inter,system-ui,Arial,sans-serif;background:#F7F9FC;color:#0F172A}
-.container{max-width:1100px;margin:0 auto;padding:20px}
-.header{display:flex;align-items:center;justify-content:space-between;padding:18px 0}
-.logo{display:flex;align-items:center;gap:10px}
-.logo-dot{width:14px;height:14px;border-radius:50%;background:linear-gradient(135deg,#2563EB,#7C3AED)}
-.brand{font-weight:800}
-.card{background:#fff;border-radius:14px;padding:18px;border:1px solid #E6EAF2;box-shadow:0 12px 32px rgba(15,23,42,0.06)}
-.hero{background:linear-gradient(135deg,rgba(226,235,255,0.7),rgba(255,255,255,0.9));border-radius:14px;padding:22px;border:1px solid #E6EAF2}
-.input{width:100%;padding:12px;border-radius:10px;border:1px solid #DCE3EF;background:#fff}
-.btn-primary{background:linear-gradient(135deg,#2563EB,#1D4ED8);color:#fff;padding:12px 16px;border-radius:10px;border:none;cursor:pointer;font-weight:700}
-.btn-ghost{background:#fff;border:1px solid #DCE3EF;padding:12px 16px;border-radius:10px;cursor:pointer}
-.plans-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:18px}
-.plan-card{background:#fff;border-radius:14px;padding:18px;border:1px solid #E6EAF2}
-.tag{display:inline-block;background:#EEF2FF;color:#1E3A8A;padding:6px 10px;border-radius:999px;margin-right:8px;margin-top:8px}
-.country-box{border:1px solid #E6EAF2;border-radius:10px;background:#fff;padding:8px;max-height:260px;overflow:auto}
-.country-section{margin-top:8px}
-.small-muted{color:#64748B;font-size:13px}
-.footer{margin-top:28px;text-align:center;color:#94A3B8;font-size:13px}
+/* app/globals.css - simple reset + base */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #F7F9FC;
+  --card: #ffffff;
+  --accent: #2563EB; /* your blue */
+  --muted: #64748B;
+  --text: #0F172A;
+}
+body {
+  font-family: Inter, system-ui, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.45;
+}
+.container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+button { cursor: pointer; }
+a { color: inherit; text-decoration: none; }
