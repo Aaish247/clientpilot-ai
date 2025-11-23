@@ -1,70 +1,63 @@
 "use client";
-
 import { useState } from "react";
-
-const TOP_COUNTRIES = ["USA", "UK", "UAE", "Canada", "Australia"];
-const ALL_COUNTRIES = {
-  A: ["Afghanistan","Albania","Algeria","Andorra","Angola"],
-  B: ["Bahamas","Bahrain","Bangladesh","Barbados","Belgium"],
-  C: ["Cambodia","Cameroon","Canada","Chad","Chile","China","Colombia"],
-  D: ["Denmark","Dominica","Dominican Republic"],
-  E: ["Ecuador","Egypt","El Salvador","Estonia"],
-  F: ["Fiji","Finland","France"],
-  G: ["Gabon","Gambia","Georgia","Germany","Ghana"],
-  H: ["Haiti","Honduras","Hungary"],
-  I: ["Iceland","India","Indonesia","Iran","Iraq","Ireland","Italy"],
-  J: ["Jamaica","Japan","Jordan"],
-  K: ["Kazakhstan","Kenya","Kuwait","Kyrgyzstan"],
-  L: ["Laos","Latvia","Lebanon","Liberia","Libya","Lithuania"],
-  M: ["Madagascar","Malawi","Malaysia","Maldives","Mali","Mexico","Morocco"],
-  N: ["Namibia","Nepal","Netherlands","New Zealand","Nigeria","Norway"],
-  O: ["Oman"],
-  P: ["Pakistan","Panama","Paraguay","Peru","Philippines","Poland","Portugal"],
-  Q: ["Qatar"],
-  R: ["Romania","Russia","Rwanda"],
-  S: ["Saudi Arabia","Senegal","Serbia","Singapore","Slovakia","Slovenia","Somalia","Spain","Sri Lanka","Sweden","Switzerland"],
-  T: ["Taiwan","Tajikistan","Tanzania","Thailand","Tunisia","Turkey"],
-  U: ["Uganda","Ukraine","UAE","UK","USA","Uruguay","Uzbekistan"],
-  V: ["Vanuatu","Venezuela","Vietnam"],
-  W: ["West Bank"],
-  Y: ["Yemen"],
-  Z: ["Zambia","Zimbabwe"]
-};
-
-const APPS = ["LinkedIn","Instagram","TikTok","Facebook","Upwork","Fiverr","Freelancer","YouTube","Google Maps","Crunchbase"];
 
 export default function ToolPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [service, setService] = useState("");
-  const [budget, setBudget] = useState("$0–500");
+
   const [selectedCountries, setSelectedCountries] = useState([]);
   const [selectedApps, setSelectedApps] = useState([]);
-  const [openLetter, setOpenLetter] = useState(null);
+
+  const [budget, setBudget] = useState("");
+  const [extraInfo, setExtraInfo] = useState("");
+  const [tone, setTone] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [emails, setEmails] = useState([]);
+  const [selectedEmailIndex, setSelectedEmailIndex] = useState(null);
   const [error, setError] = useState("");
-  const [tone, setTone] = useState("friendly");
-  const MAX_FREE_APPS = 3;
+
+  const APPS = [
+    "Upwork", "Fiverr", "LinkedIn", "Instagram", "Facebook",
+    "Freelancer", "PeoplePerHour", "Guru", "Reddit", "YouTube"
+  ];
+
+  const ALL_COUNTRIES = [
+    "USA","UK","UAE","Canada","Australia","Afghanistan","Albania","Algeria",
+    "Argentina","Armenia","Austria","Azerbaijan","Bahamas","Bahrain","Bangladesh",
+    "Belarus","Belgium","Bolivia","Bosnia","Brazil","Bulgaria","Cambodia",
+    "China","Colombia","Costa Rica","Croatia","Denmark","Egypt","Estonia","Finland",
+    "France","Georgia","Germany","Ghana","Greece","Hong Kong","Hungary","Iceland",
+    "India","Indonesia","Iran","Iraq","Ireland","Israel","Italy","Japan","Jordan",
+    "Kazakhstan","Kenya","Kuwait","Kyrgyzstan","Latvia","Lebanon","Lithuania",
+    "Luxembourg","Malaysia","Maldives","Mexico","Mongolia","Morocco","Nepal",
+    "Netherlands","New Zealand","Nigeria","Norway","Oman","Pakistan","Panama",
+    "Peru","Philippines","Poland","Portugal","Qatar","Romania","Russia","Saudi Arabia",
+    "Serbia","Singapore","Slovakia","Slovenia","South Africa","South Korea","Spain",
+    "Sri Lanka","Sweden","Switzerland","Thailand","Turkey","Ukraine","Vietnam","Yemen"
+  ];
 
   const toggleCountry = (c) => {
-    setSelectedCountries(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c]);
-  };
-
-  const toggleApp = (a) => {
-    if (!selectedApps.includes(a)) {
-      if (selectedApps.length >= MAX_FREE_APPS) {
-        setError(`Free plan: max ${MAX_FREE_APPS} apps.`);
-        return;
-      }
+    if (selectedCountries.includes(c)) {
+      setSelectedCountries(selectedCountries.filter((x) => x !== c));
+    } else {
+      setSelectedCountries([...selectedCountries, c]);
     }
-    setSelectedApps(prev => prev.includes(a) ? prev.filter(x => x !== a) : [...prev, a]);
   };
 
-  // ⭐ FIXED handleGenerate – clean, stable, correct split
+  const toggleApp = (app) => {
+    if (selectedApps.includes(app)) {
+      setSelectedApps(selectedApps.filter((x) => x !== app));
+    } else {
+      setSelectedApps([...selectedApps, app]);
+    }
+  };
+
   const handleGenerate = async () => {
     setError("");
-    if (!service || !email || !name) {
+
+    if (!name || !email || !service) {
       setError("Please enter name, email and service.");
       return;
     }
@@ -79,37 +72,45 @@ export default function ToolPage() {
 
     setLoading(true);
     setEmails([]);
+    setSelectedEmailIndex(null);
+
+    const payload = {
+      name,
+      email,
+      service,
+      selectedCountries,
+      selectedApps,
+      budget,
+      extraInfo,
+      tone,
+    };
 
     try {
-      const payload = {
-        name,
-        email,
-        service,
-        selectedCountries,
-        selectedApps,
-        budget,
-        tone
-      };
-
-      const res = await fetch("/api/generate", {
+      const r = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
+      const data = await r.json();
 
-      if (!data || !data.emails) {
+      if (data.error) {
+        setError("AI Error: " + JSON.stringify(data.error));
+        setLoading(false);
+        return;
+      }
+
+      let raw = data.emails || "";
+      if (!raw || raw.length < 5) {
         setError("AI returned nothing.");
         setLoading(false);
         return;
       }
 
-      // ⭐ SUPER SAFE SPLIT
-      const emailList = data.emails
-        .split(/(?:^|\n)(?=\d+\.)/)
-        .map(e => e.trim())
-        .filter(e => /^\d+\./.test(e))
+      const emailList = raw
+        .split(/(?:\n\n|^)(?=\d\.)/g)
+        .map((e) => e.trim())
+        .filter((x) => x.length > 0)
         .slice(0, 5);
 
       if (emailList.length === 0) {
@@ -120,50 +121,157 @@ export default function ToolPage() {
 
       setEmails(emailList);
     } catch (err) {
-      console.error(err);
-      setError("Network error.");
+      setError("Server error.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ padding: 20, maxWidth: 720, margin: "0 auto" }}>
-      <h1 style={{ fontSize: 26, fontWeight: 800, marginBottom: 12 }}>Your Client Finder</h1>
+    <div className="px-4 py-6 max-w-xl mx-auto">
+      <h1 className="text-3xl font-bold mb-6">Your Client Finder</h1>
 
-      <div style={{ background: "#fff", borderRadius: 12, padding: 16, boxShadow: "0 8px 24px rgba(0,0,0,0.06)" }}>
-        
-        {/* Name */}
-        <label style={{ fontWeight: 700 }}>Your Name</label>
-        <input value={name} onChange={e=>setName(e.target.value)} placeholder="Your name"
-               style={{ width:"100%", padding:12, marginTop:8, borderRadius:10, border:"1px solid #E6EAF2" }} />
+      {/* FORM BOX */}
+      <div className="bg-white shadow-lg p-5 rounded-2xl space-y-4">
 
-        {/* Email */}
-        <label style={{ fontWeight:700, marginTop:12, display:"block" }}>Email</label>
-        <input value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com"
-               style={{ width:"100%", padding:12, marginTop:8, borderRadius:10, border:"1px solid #E6EAF2" }} />
+        <div>
+          <label className="font-semibold">Your Name</label>
+          <input
+            className="w-full mt-1 p-3 border rounded-xl"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Enter your name"
+          />
+        </div>
 
-        {/* Service */}
-        <label style={{ fontWeight:700, marginTop:12, display:"block" }}>Your Service</label>
-        <input value={service} onChange={e=>setService(e.target.value)} placeholder="e.g., Social media ads"
-               style={{ width:"100%", padding:12, marginTop:8, borderRadius:10, border:"1px solid #E6EAF2" }} />
+        <div>
+          <label className="font-semibold">Email</label>
+          <input
+            className="w-full mt-1 p-3 border rounded-xl"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Your email"
+          />
+        </div>
 
-        {/* Generate button */}
-        <button onClick={handleGenerate} style={{ marginTop:16, width:"100%", padding:12, borderRadius:10, border:"none",
-          background:"linear-gradient(135deg,#2563EB,#1D4ED8)", color:"#fff", fontWeight:800 }}>
+        <div>
+          <label className="font-semibold">Your Service</label>
+          <input
+            className="w-full mt-1 p-3 border rounded-xl"
+            value={service}
+            onChange={(e) => setService(e.target.value)}
+            placeholder="Example: Social Media Management"
+          />
+        </div>
+
+        {/* APPS */}
+        <div>
+          <label className="font-semibold">Select Platforms</label>
+          <div className="grid grid-cols-2 gap-2 mt-2">
+            {APPS.map((app) => (
+              <button
+                key={app}
+                onClick={() => toggleApp(app)}
+                className={`p-2 rounded-xl border ${
+                  selectedApps.includes(app)
+                    ? "border-blue-500"
+                    : "border-gray-300"
+                }`}
+              >
+                {app}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* COUNTRIES */}
+        <div>
+          <label className="font-semibold block">Target Countries</label>
+          <div className="h-40 overflow-y-scroll border p-3 rounded-xl">
+            {ALL_COUNTRIES.map((c) => (
+              <div
+                key={c}
+                onClick={() => toggleCountry(c)}
+                className={`p-2 rounded-lg cursor-pointer ${
+                  selectedCountries.includes(c)
+                    ? "bg-blue-100"
+                    : "bg-gray-100"
+                } mb-1`}
+              >
+                {c}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* BUDGET */}
+        <div>
+          <label className="font-semibold block">Client Budget (optional)</label>
+          <input
+            className="w-full mt-1 p-3 border rounded-xl"
+            value={budget}
+            onChange={(e) => setBudget(e.target.value)}
+            placeholder="Example: $500–$1500"
+          />
+        </div>
+
+        {/* EXTRA INFO */}
+        <div>
+          <label className="font-semibold block">Extra Instructions (optional)</label>
+          <textarea
+            className="w-full mt-1 p-3 border rounded-xl"
+            value={extraInfo}
+            onChange={(e) => setExtraInfo(e.target.value)}
+            placeholder="Anything special?"
+          />
+        </div>
+
+        {/* TONE */}
+        <div>
+          <label className="font-semibold block">Email Tone</label>
+          <select
+            className="w-full mt-1 p-3 border rounded-xl"
+            value={tone}
+            onChange={(e) => setTone(e.target.value)}
+          >
+            <option value="">Choose tone</option>
+            <option value="Friendly">Friendly</option>
+            <option value="Motivated">Motivated</option>
+            <option value="Money-focused">Money Focused</option>
+            <option value="Professional">Professional</option>
+            <option value="Simple">Simple</option>
+          </select>
+        </div>
+
+        {/* BUTTON */}
+        <button
+          onClick={handleGenerate}
+          disabled={loading}
+          className="w-full bg-blue-600 text-white py-3 rounded-xl mt-4"
+        >
           {loading ? "Generating..." : "Create Emails"}
         </button>
 
-        {error && <div style={{ color:"red", marginTop:12 }}>{error}</div>}
+        {error && <p className="text-red-600 mt-2">{error}</p>}
       </div>
 
-      {/* RESULT CARDS */}
+      {/* EMAIL RESULTS */}
       {emails.length > 0 && (
-        <div style={{ marginTop: 20, display:"grid", gap:12 }}>
-          {emails.map((raw, i) => (
-            <div key={i} style={{ background:"#fff", padding:12, borderRadius:10, border:"2px solid #E6EAF2" }}>
-              <div style={{ fontWeight:800 }}>Option {i + 1}</div>
-              <pre style={{ whiteSpace:"pre-wrap" }}>{raw}</pre>
+        <div className="mt-6 space-y-3">
+          <h2 className="text-xl font-semibold">Pick One Email</h2>
+
+          {emails.map((em, idx) => (
+            <div
+              key={idx}
+              onClick={() => setSelectedEmailIndex(idx)}
+              className={`p-4 rounded-xl border cursor-pointer ${
+                selectedEmailIndex === idx
+                  ? "border-blue-500 bg-blue-50"
+                  : "border-gray-300"
+              }`}
+            >
+              <p className="font-semibold">Option {idx + 1}</p>
+              <p className="text-sm mt-2 whitespace-pre-wrap">{em}</p>
             </div>
           ))}
         </div>
