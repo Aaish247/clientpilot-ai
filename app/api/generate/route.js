@@ -1,8 +1,8 @@
+// app/api/generate/route.js
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
   try {
-    const body = await req.json();
     const {
       name,
       email,
@@ -11,16 +11,8 @@ export async function POST(req) {
       selectedApps,
       budget,
       extraInfo,
-      tone,
-    } = body;
-
-    // Validations
-    if (!name || !email || !service) {
-      return NextResponse.json(
-        { error: "Missing name, email, or service." },
-        { status: 400 }
-      );
-    }
+      tone
+    } = await req.json();
 
     if (!process.env.GROQ_API_KEY) {
       return NextResponse.json(
@@ -29,59 +21,47 @@ export async function POST(req) {
       );
     }
 
-    // Prompt
     const prompt = `
-Create 5 outreach emails. Each must include:
+Write 5 outreach emails (numbered 1–5).
+Each email MUST include:
 - Subject line
-- Body 120–170 words
-- Numbered 1–5
-- Styles: friendly, motivated, money-focused, professional, simple
+- 120–170 word body
+- Different styles: Friendly, Motivated, Money-Focused, Professional, Simple
 
-User Details:
+Details:
 Name: ${name}
 Email: ${email}
 Service: ${service}
-Countries: ${selectedCountries?.join(", ") || "None"}
-Apps: ${selectedApps?.join(", ") || "None"}
+Countries: ${selectedCountries.join(", ")}
+Platforms: ${selectedApps.join(", ")}
 Budget: ${budget}
 Tone: ${tone}
-Extra Info: ${extraInfo || "None"}
+Extra Notes: ${extraInfo || "None"}
+    `;
 
-Return only plain text with emails numbered 1 to 5.
-`;
-
-    // GROQ API call
-    const aiRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "mixtral-8x7b-32768",
+        model: "llama3-70b-8192",
         messages: [{ role: "user", content: prompt }],
-        max_tokens: 1400,
+        max_tokens: 1500,
       }),
     });
 
-    const data = await aiRes.json();
+    const data = await response.json();
 
-    if (data.error) {
-      return NextResponse.json(
-        { error: data.error },
-        { status: 500 }
-      );
-    }
-
-    const output = data.choices?.[0]?.message?.content;
-    if (!output) {
+    if (!data.choices?.[0]?.message?.content) {
       return NextResponse.json(
         { error: "AI returned no output." },
         { status: 500 }
       );
     }
 
-    return NextResponse.json({ emails: output });
+    return NextResponse.json({ emails: data.choices[0].message.content });
 
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 });
