@@ -1,4 +1,3 @@
-// app/api/generate/route.js
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
@@ -11,8 +10,17 @@ export async function POST(req) {
       selectedCountries,
       selectedApps,
       budget,
-      extraInfo
+      extraInfo,
+      tone,
     } = body;
+
+    // basic validation
+    if (!name || !email || !service) {
+      return NextResponse.json(
+        { error: "Missing name, email or service." },
+        { status: 400 }
+      );
+    }
 
     if (!process.env.GROQ_API_KEY) {
       return NextResponse.json(
@@ -21,69 +29,67 @@ export async function POST(req) {
       );
     }
 
+    // prompt for AI
     const prompt = `
-Generate 5 outreach email options (1-5). 
-Each email MUST include:
-- Subject line
-- 120-170 word body
-- Vary tone: friendly, motivated, money-focused, professional, simple
+You are an expert outreach email writer.
 
-User Details:
+Write 5 different emails (subject + body) using:
+
 Name: ${name}
 Email: ${email}
 Service: ${service}
-Countries: ${selectedCountries?.join(", ") || "none"}
-Platforms: ${selectedApps?.join(", ") || "none"}
+Target Countries: ${selectedCountries?.join(", ")}
+Platforms: ${selectedApps?.join(", ")}
 Budget: ${budget}
-Extra notes: ${extraInfo || "none"}
+Tone: ${tone}
+Extra Notes: ${extraInfo || "None"}
 
 Rules:
-- Do NOT create fake claims.
-- Do NOT use fake numbers.
-- Format EXACTLY like:
-
-1.
-Subject: ...
-Body: ...
-
-2.
-Subject: ...
-Body: ...
+- Must return 5 emails.
+- Each must be numbered 1, 2, 3, 4, 5.
+- Each must include a subject line.
+- Body length: 120–170 words.
+- DO NOT return markdown, ONLY plain text.
 `;
 
-    const groqRes = await fetch(
-      "https://api.groq.com/openai/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: "llama-3.1-70b-versatile",
-          messages: [{ role: "user", content: prompt }],
-          max_tokens: 1500,
-        }),
-      }
-    );
+    // GROQ API CALL (CORRECT!!)
+    const ai = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "llama-3.1-70b-versatile",
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 1200,
+        temperature: 0.8,
+      }),
+    });
 
-    const data = await groqRes.json();
+    const data = await ai.json();
 
     if (data.error) {
-      return NextResponse.json({ error: data.error }, { status: 500 });
+      return NextResponse.json(
+        { error: data.error.message || "Groq API error" },
+        { status: 500 }
+      );
     }
 
-    const output = data.choices?.[0]?.message?.content || null;
+    const output = data?.choices?.[0]?.message?.content;
 
     if (!output || output.length < 10) {
       return NextResponse.json(
-        { error: "AI returned no output." },
+        { error: "AI returned nothing." },
         { status: 500 }
       );
     }
 
     return NextResponse.json({ emails: output });
   } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+    return NextResponse.json(
+      { error: err.message || "Server error" },
+      { status: 500 }
+    );
   }
 }
