@@ -5,40 +5,33 @@ export async function POST(req) {
     const body = await req.json();
     const { name, email, service, countries, apps, budget, extra } = body;
 
-    if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json({ error: "Missing OPENAI_API_KEY" }, { status: 500 });
-    }
+    if (!process.env.OPENAI_API_KEY)
+      return NextResponse.json(
+        { error: "Missing OPENAI_API_KEY" },
+        { status: 500 }
+      );
 
     const prompt = `
-Generate 5 outreach email variations. Each email must include:
-- Subject line
-- 120–170 word body
-- Tone types: Friendly, Motivated, Greedy/Money-focused, Professional, Simple
+Write 5 outreach emails (subject + body) for a freelancer.
 
-User details:
-- Name: ${name}
-- Email: ${email}
-- Service: ${service}
-- Countries: ${countries.join(", ")}
-- Apps/Sources: ${apps.join(", ")}
-- Budget: ${budget}
-- Extra Notes: ${extra || "None"}
+User Info:
+Name: ${name}
+Email: ${email}
+Service: ${service}
+Countries: ${countries.join(", ")}
+Apps: ${apps.join(", ")}
+Budget: ${budget}
+Extra Details: ${extra || "None"}
 
-Format strictly like:
+Rules:
+- Each email MUST start with "1.", "2.", "3.", "4.", "5."
+- Each email must have:
+  • Subject line
+  • 120–170 word body
+- No fake data.
+`;
 
-1.
-Subject: ...
-Body: ...
-
-2.
-Subject: ...
-Body: ...
-
-3.
-...
-    `.trim();
-
-    // ⭐ NEW OPENAI API FORMAT
+    // NEW OPENAI API ENDPOINT for sk-proj keys
     const res = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
@@ -46,23 +39,28 @@ Body: ...
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "gpt-4.1-mini",
         input: prompt,
-        max_output_tokens: 1200,
+        max_output_tokens: 1000,
       }),
     });
 
     const data = await res.json();
 
+    // Check for OpenAI error
     if (data.error) {
       return NextResponse.json({ error: data.error }, { status: 400 });
     }
 
-    // ⭐ NEW FIELD = data.output_text
-    const output = data.output_text?.[0] || "";
+    // NEW API returns "output_text"
+    const output =
+      data.output_text?.[0] ||
+      data.output_text ||
+      data.choices?.[0]?.message?.content ||
+      "";
 
-    if (!output || output.length < 10) {
-      return NextResponse.json({ error: "EMPTY_RESPONSE" }, { status: 500 });
+    if (!output.trim()) {
+      return NextResponse.json({ error: "No output" }, { status: 400 });
     }
 
     return NextResponse.json({ emails: output });
