@@ -1,36 +1,24 @@
+// app/page.js
 import Link from "next/link";
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <main className="container">
-      <header className="header">
-        <div className="logo">
-          <div className="logo-dot" />
-          <div className="brand">ClientPilot AI</div>
-        </div>
-        <nav>
-          <Link href="/pricing">See plans & upgrade →</Link>
-        </nav>
-      </header>
+    <main style={{ padding: 24, display: "flex", justifyContent: "center" }}>
+      <div style={{ width: "100%", maxWidth: 920 }}>
+        <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+          <h1 style={{ fontSize: 28 }}>ClientPilot AI</h1>
+          <Link href="/pricing"><button style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid #DCE3EF" }}>See plans & upgrade →</button></Link>
+        </header>
 
-      <section className="hero">
-        <h1 style={{fontSize:28}}>Find clients while you sleep</h1>
-        <p style={{marginTop:8,color:'#475569'}}>Tell us what you do — our AI will search the web and return leads for outreach.</p>
-      </section>
+        <section style={{ background: "#fff", borderRadius: 14, padding: 20, boxShadow: "0 12px 28px rgba(15,23,42,0.06)" }}>
+          <h2 style={{ marginBottom: 8 }}>Find clients while you sleep</h2>
+          <p style={{ color: "var(--muted)" }}>Tell us about your service. Our AI will search platforms and generate personalized outreach for your target countries.</p>
 
-      <section style={{marginTop:18}}>
-        <div className="card">
-          <h2 style={{fontSize:18}}>Quick start</h2>
-          <p className="small-muted">Fill the form on the <strong>Tool</strong> page to generate outreach emails. Scroll down to see plans.</p>
-
-          <div style={{display:'flex',gap:12,marginTop:14}}>
-            <Link href="/tool"><button className="btn-primary">Open tool (demo)</button></Link>
-            <Link href="/pricing"><button className="btn-ghost">See plans & upgrade</button></Link>
+          <div style={{ marginTop: 18 }}>
+            <Link href="/tool"><button style={{ background: "linear-gradient(135deg,#2563EB,#1D4ED8)", color: "#fff", padding: "12px 16px", borderRadius: 10, border: "none" }}>Start My Setup</button></Link>
           </div>
-        </div>
-      </section>
-
-      <footer className="footer">© {new Date().getFullYear()} ClientPilot AI</footer>
+        </section>
+      </div>
     </main>
   );
-}
+  }
